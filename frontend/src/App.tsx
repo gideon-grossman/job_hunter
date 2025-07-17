@@ -222,9 +222,9 @@ function App() {
                       <Typography variant="h6">{job.title}</Typography>
                       <Typography color="textSecondary">{job.company}</Typography>
                       <Typography variant="body2">{job.location}</Typography>
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        {job.description}
-                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}
+                        dangerouslySetInnerHTML={{ __html: job.description }}
+                      />
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         <strong>Requirements:</strong> {job.requirements.join(', ')}
                       </Typography>

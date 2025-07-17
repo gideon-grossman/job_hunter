@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT ||5050;
 
@@ -71,59 +72,33 @@ app.post('/api/upload-cv', upload.single('cv'), (req, res) => {
   }
 });
 
-// Job search endpoint
-app.get('/api/search-jobs', (req, res) => {
+// Job search endpoint (now uses Remotive API)
+app.get('/api/search-jobs', async (req, res) => {
   try {
-    // Simulate job search for green software jobs
-    const jobs = [
-      {
-        id: 1,
-        title: 'Green Software Engineer',
-        company: 'EcoTech Solutions',
-        location: 'San Francisco, CA',
-        description: 'Build sustainable software solutions for climate tech companies',
-        requirements: ['JavaScript', 'React', 'Node.js', 'AWS'],
-        salary: '$120k - $150k',
-        type: 'Full-time',
-        remote: true
-      },
-      {
-        id: 2,
-        title: 'Sustainability Developer',
-        company: 'GreenCloud Inc',
-        location: 'New York, NY',
-        description: 'Develop applications that help companies reduce their carbon footprint',
-        requirements: ['Python', 'Django', 'PostgreSQL', 'Docker'],
-        salary: '$110k - $140k',
-        type: 'Full-time',
-        remote: true
-      },
-      {
-        id: 3,
-        title: 'Climate Impact Fullstack Engineer',
-        company: 'Renewables.io',
-        location: 'Austin, TX',
-        description: 'Create platforms for renewable energy management and optimization',
-        requirements: ['TypeScript', 'React', 'Node.js', 'MongoDB'],
-        salary: '$100k - $130k',
-        type: 'Full-time',
-        remote: false
-      },
-      {
-        id: 4,
-        title: 'Environmental Data Scientist',
-        company: 'EcoAnalytics',
-        location: 'Seattle, WA',
-        description: 'Build ML models to analyze environmental data and predict climate patterns',
-        requirements: ['Python', 'TensorFlow', 'Pandas', 'SQL'],
-        salary: '$130k - $160k',
-        type: 'Full-time',
-        remote: true
-      }
-    ];
-    
-    res.json({ jobs: jobs });
+    // For demo: use hardcoded skills, but in production use parsed CV data
+    const skills = req.query.skills || 'green software, sustainability, climate, renewable, frontend, data visualization, typescript, react';
+    console.log('skills:' + skills);
+    const keywords = Array.isArray(skills) ? skills.join(' ') : skills;
+    console.log('keywords:' + keywords);
+    const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(keywords)}`;
+    console.log('remotiveUrl:' + remotiveUrl);
+    const response = await axios.get(remotiveUrl);
+    const jobs = (response.data.jobs || []).map((job, idx) => ({
+      id: job.id || idx,
+      title: job.title,
+      company: job.company_name,
+      location: job.candidate_required_location,
+      description: job.description,
+      requirements: [job.category],
+      salary: job.salary || 'N/A',
+      type: job.job_type,
+      remote: true,
+      url: job.url
+    }));
+    console.log('jobs[0]:' + JSON.stringify(jobs[0]));
+    res.json({ jobs });
   } catch (error) {
+    console.log('error:' + error);
     res.status(500).json({ error: error.message });
   }
 });
